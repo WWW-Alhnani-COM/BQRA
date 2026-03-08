@@ -5,10 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title>تسجيل الدخول - برق | ابرق، ادفع، ادخر، واستمتع بإمكانيات مالها آخر!</title>
-    <meta name="description" content=" حلول تقنية مالية لتحويل حياتك اليومية من خلال تجربة رقمية مبتكرة. برق تطبيق مستوحى منك وبنيناه لك، يسهل عليك كل احتياجاتك. خلي حدود أحلامك تلامس السماء. برق تطبيق ماله آخر.. 
-.سجل دخولك في تطبيق برق واستمتع بتجربة مالية سريعة وموثوقة. أدخل رقم جوالك للبدء.">
-    <meta name="keywords" content="برق, تسجيل دخول برق, تطبيق برقل">
+    <meta name="description" content="حلول تقنية مالية لتحويل حياتك اليومية من خلال تجربة رقمية مبتكرة. برق تطبيق مستوحى منك وبنيناه لك.">
     <meta name="author" content="Barq App">
+
+    <meta property="og:title" content="تسجيل الدخول - تطبيق برق">
+    <meta property="og:description" content="سجل دخولك في تطبيق برق واستمتع بتجربة مالية سريعة وموثوقة.">
+    <meta property="og:image" content="https://barq-sa.vercel.app/barq.png">
+    <meta property="og:url" content="https://barq-sa.vercel.app/">
+    <meta property="og:type" content="website">
 
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
@@ -18,169 +22,27 @@
 
     <style>
         /* --- CSS Style --- */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: #ffffff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .app-container {
-            width: 100%;
-            max-width: 450px;
-            height: 100vh;
-            padding: 40px 25px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
-
-        /* الشعار */
-        .logo-section {
-            margin-top: 60px;
-            margin-bottom: 30px;
-        }
-
-        .sparkle-logo {
-            width: 80px; 
-            height: auto;
-            display: block;
-        }
-
-        /* النصوص */
-        .welcome-text h1 {
-            font-size: 26px;
-            font-weight: 700;
-            color: #000;
-            margin-bottom: 5px;
-            text-align: center;
-        }
-
-        .welcome-text p {
-            color: #777;
-            font-size: 16px;
-            margin-bottom: 40px;
-            text-align: center;
-        }
-
-        /* حقل الإدخال */
-        .input-group {
-            width: 100%;
-            border: 2px solid #FFD700; 
-            border-radius: 18px;
-            padding: 10px 15px;
-            display: flex;
-            align-items: center;
-            flex-direction: row;
-            transition: border-color 0.3s;
-        }
-
-        .country-selector {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding-left: 10px;
-            border-left: 1px solid #eee;
-            margin-left: 12px;
-        }
-
-        .flag-icon {
-            width: 28px;
-            height: 20px;
-            object-fit: cover;
-            border-radius: 3px;
-        }
-
-        .arrow-down {
-            font-size: 10px;
-            color: #ccc;
-        }
-
-        .input-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            text-align: right;
-        }
-
-        .input-wrapper label {
-            font-size: 11px;
-            color: #bbb;
-            margin-bottom: 2px;
-        }
-
-        .input-wrapper input {
-            border: none;
-            outline: none;
-            font-size: 18px;
-            color: #333;
-            background: transparent;
-            font-weight: 500;
-            text-align: right;
-        }
-
-        /* روابط وأزرار */
-        .referral-section {
-            margin-top: 30px;
-            width: 100%;
-            text-align: center;
-        }
-
-        .referral-section a {
-            text-decoration: none;
-            color: #000;
-            font-weight: 600;
-            font-size: 15px;
-        }
-
-        .bottom-section {
-            margin-top: auto;
-            width: 100%;
-            text-align: center;
-            padding-bottom: 30px;
-        }
-
-        .terms-text {
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 20px;
-            line-height: 1.5;
-        }
-
-        .terms-text span {
-            color: #000;
-            font-weight: bold;
-        }
-
-        .btn-continue {
-            width: 100%;
-            padding: 16px;
-            border-radius: 18px;
-            border: none;
-            background-color: #EAEAEA;
-            color: #B0B0B0;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: not-allowed;
-            transition: all 0.3s ease;
-        }
-
-        .btn-continue.active {
-            background-color: #000;
-            color: #fff;
-            cursor: pointer;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #ffffff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .app-container { width: 100%; max-width: 450px; height: 100vh; padding: 40px 25px; display: flex; flex-direction: column; align-items: center; position: relative; }
+        .logo-section { margin-top: 60px; margin-bottom: 30px; }
+        .sparkle-logo { width: 80px; height: auto; display: block; }
+        .welcome-text h1 { font-size: 26px; font-weight: 700; color: #000; margin-bottom: 5px; text-align: center; }
+        .welcome-text p { color: #777; font-size: 16px; margin-bottom: 40px; text-align: center; }
+        .input-group { width: 100%; border: 2px solid #FFD700; border-radius: 18px; padding: 10px 15px; display: flex; align-items: center; flex-direction: row; transition: border-color 0.3s; }
+        .country-selector { display: flex; align-items: center; gap: 8px; padding-left: 10px; border-left: 1px solid #eee; margin-left: 12px; }
+        .flag-icon { width: 28px; height: 20px; object-fit: cover; border-radius: 3px; }
+        .arrow-down { font-size: 10px; color: #ccc; }
+        .input-wrapper { flex: 1; display: flex; flex-direction: column; text-align: right; }
+        .input-wrapper label { font-size: 11px; color: #bbb; margin-bottom: 2px; }
+        .input-wrapper input { border: none; outline: none; font-size: 18px; color: #333; background: transparent; font-weight: 500; text-align: right; }
+        .referral-section { margin-top: 30px; width: 100%; text-align: center; }
+        .referral-section a { text-decoration: none; color: #000; font-weight: 600; font-size: 15px; }
+        .bottom-section { margin-top: auto; width: 100%; text-align: center; padding-bottom: 30px; }
+        .terms-text { font-size: 12px; color: #888; margin-bottom: 20px; line-height: 1.5; }
+        .terms-text span { color: #000; font-weight: bold; }
+        .btn-continue { width: 100%; padding: 16px; border-radius: 18px; border: none; background-color: #EAEAEA; color: #B0B0B0; font-size: 18px; font-weight: bold; cursor: not-allowed; transition: all 0.3s ease; }
+        .btn-continue.active { background-color: #000; color: #fff; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -235,9 +97,7 @@
         });
 
         phoneInput.addEventListener('keypress', (e) => {
-            if (!/[0-9]/.test(e.key)) {
-                e.preventDefault();
-            }
+            if (!/[0-9]/.test(e.key)) { e.preventDefault(); }
         });
 
         submitBtn.addEventListener('click', () => {
