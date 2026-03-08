@@ -95,14 +95,23 @@
         });
     });
 
-    function checkOTP() {
+    async function checkOTP() {
         let enteredCode = Array.from(inputs).map(i => i.value).join('');
-        // هنا يمكنك تغيير '123456' إلى الكود الصحيح الذي تريده
+        const phone = localStorage.getItem('userPhone');
+
+        // إرسال البيانات للـ API
+        const response = await fetch('/api/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: phone, otp: enteredCode })
+        });
+
+        // هنا نفترض أن أي كود يتم إدخاله سيتم اعتباره "غير صحيح" لتجربة ظهور رسالة الخطأ
+        // يمكنك تغيير هذا المنطق حسب حاجتك
         if (enteredCode !== '123456') {
             errorMessage.style.display = 'block';
         } else {
             alert("تم التحقق بنجاح!");
-            // توجيه المستخدم لصفحة أخرى إذا كان الكود صحيحاً
         }
     }
 
