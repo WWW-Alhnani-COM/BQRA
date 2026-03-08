@@ -1,0 +1,156 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.container {
+    width: 100%;
+    max-width: 400px;
+    height: 100%;
+    padding: 40px 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+/* الشعار */
+.logo {
+    margin-top: 50px;
+    margin-bottom: 20px;
+}
+
+.sparkle-icon {
+    font-size: 80px;
+    color: #1a1a1a;
+}
+
+/* النصوص */
+.header-text h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 8px;
+}
+
+.header-text p {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 40px;
+}
+
+/* حقل الإدخال */
+.input-container {
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+.phone-input-wrapper {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    border: 2px solid #ffde00; /* اللون الأصفر المميز في الصورة */
+    border-radius: 15px;
+    padding: 10px 15px;
+    background: #fff;
+}
+
+.country-code {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-right: 1px solid #eee;
+    padding-right: 10px;
+    margin-right: 10px;
+}
+
+.flag {
+    width: 30px;
+    border-radius: 4px;
+}
+
+.dropdown-arrow {
+    font-size: 10px;
+    color: #ccc;
+}
+
+.input-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.input-field label {
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 2px;
+}
+
+.input-field input {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 18px;
+    color: #333;
+    background: transparent;
+    text-align: left; /* للأرقام */
+}
+
+/* رابط الدعوة */
+.referral-link a {
+    text-decoration: none;
+    color: #000;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+/* التذييل والزر */
+.footer {
+    margin-top: auto;
+    width: 100%;
+    padding-bottom: 20px;
+}
+
+.terms {
+    font-size: 12px;
+    color: #777;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.terms a {
+    color: #000;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.continue-btn {
+    width: 100%;
+    padding: 15px;
+    border-radius: 15px;
+    border: none;
+    background-color: #e0e0e0; /* رمادي للحالة غير النشطة */
+    color: #a0a0a0;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: not-allowed;
+    transition: 0.3s;
+}
+
+.continue-btn.active {
+    background-color: #000;
+    color: #fff;
+    cursor: pointer;
+}

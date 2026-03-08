@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أدخل رمز التحقق</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; background: #fff; }
+        
+        .container { width: 100%; max-width: 400px; padding: 20px; text-align: center; }
+        
+        /* تنسيق الأيقونة */
+        .icon-container { margin-bottom: 30px; display: flex; justify-content: center; }
+        .sparkle-icon { width: 250px; height: auto; } 
+
+        h1 { font-size: 22px; margin-bottom: 10px; color: #000; }
+        p { color: #555; margin-bottom: 30px; font-size: 14px; }
+        
+        /* مربعات الـ OTP */
+        .otp-inputs { display: flex; justify-content: center; gap: 10px; margin-bottom: 40px; }
+        .otp-box { width: 45px; height: 55px; border: none; border-radius: 10px; background-color: #f2f2f2; text-align: center; font-size: 20px; outline: none; transition: 0.3s; }
+        .otp-box:focus { background-color: #eee; border: 2px solid #FFD700; }
+        
+        .resend { color: #888; font-size: 14px; margin-top: 20px; line-height: 1.8; }
+        
+        /* تنسيق الرابط عند التعطيل وبعد التفعيل */
+        #resendLink {
+            color: #ccc;
+            font-weight: bold;
+            text-decoration: none;
+            pointer-events: none; /* يمنع الضغط */
+            transition: 0.3s;
+        }
+        
+        #resendLink.available {
+            color: #000;
+            pointer-events: auto; /* يسمح بالضغط */
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="icon-container">
+        <img src="barq-icon.png" alt="Icon" class="sparkle-icon">
+    </div>
+
+    <h1>أدخل رمز التحقق</h1>
+    <p>تم الإرسال إلى <span id="displayPhone"></span></p>
+
+    <div class="otp-inputs">
+        <input type="number" class="otp-box" maxlength="1">
+        <input type="number" class="otp-box" maxlength="1">
+        <input type="number" class="otp-box" maxlength="1">
+        <input type="number" class="otp-box" maxlength="1">
+        <input type="number" class="otp-box" maxlength="1">
+        <input type="number" class="otp-box" maxlength="1">
+    </div>
+
+    <div class="resend">
+        لم تحصل على رمز؟ <br>
+        <a href="javascript:void(0)" id="resendLink">إعادة إرسال الرمز في <span id="timer">60</span></a>
+    </div>
+</div>
+
+<script>
+    // 1. عرض الرقم المخزن
+    const phone = localStorage.getItem('userPhone');
+    if(phone) {
+        document.getElementById('displayPhone').innerText = phone;
+    }
+
+    // 2. منطق العداد التنازلي
+    let timeLeft = 60; // عدد الثواني
+    const timerElement = document.getElementById('timer');
+    const resendLink = document.getElementById('resendLink');
+
+    function startTimer() {
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timerElement.innerText = timeLeft;
+
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                resendLink.innerHTML = "إعادة إرسال الرمز الآن";
+                resendLink.classList.add('available');
+            }
+        }, 1000);
+    }
+
+    // تشغيل العداد عند فتح الصفحة
+    startTimer();
+
+    // حدث عند الضغط على إعادة الإرسال (بعد تفعيله)
+    resendLink.addEventListener('click', () => {
+        if(resendLink.classList.contains('available')) {
+            alert("تم إعادة إرسال الرمز!");
+            // إعادة ضبط العداد
+            timeLeft = 60;
+            resendLink.classList.remove('available');
+            resendLink.innerHTML = 'إعادة إرسال الرمز في <span id="timer">60</span>';
+            // إعادة تشغيل العداد
+            // ملاحظة: نحتاج لإعادة تعريف timerElement لأننا غيرنا الـ innerHTML
+            setTimeout(() => {
+                location.reload(); // أسهل طريقة لإعادة تشغيل العداد بالكامل
+            }, 500);
+        }
+    });
+
+    // 3. التنقل التلقائي بين المربعات
+    const inputs = document.querySelectorAll('.otp-box');
+    inputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+            if (e.target.value.length > 1) e.target.value = e.target.value.slice(0, 1);
+            if (input.value.length === 1 && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+        });
+        
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && input.value === '' && index > 0) {
+                inputs[index - 1].focus();
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
