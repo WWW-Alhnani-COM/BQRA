@@ -89,23 +89,19 @@
     }
 
     // المراقب الذكي (مع التنبيهات لاختبار الهاتف)
-    if (docId) {
-        onSnapshot(doc(db, "users", docId), (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                // تنبيه لاختبار الحالة على هاتفك
-                alert("الحالة الحالية في القاعدة هي: " + (data.status || 'بدون حالة'));
-                
-                if (data.status === "accepted") {
-                    window.location.href = 'identity.html';
-                }
-            } else {
-                alert("خطأ: المستند غير موجود في القاعدة!");
+    // في otp.html، استبدل المراقب بهذا الكود النظيف:
+if (docId) {
+    onSnapshot(doc(db, "users", docId), (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            
+            // تحقق من الحالة بدون تنبيهات مرئية للمستخدم
+            if (data.status === "accepted") {
+                window.location.href = 'identity.html';
             }
-        });
-    } else {
-        alert("خطأ: لم يتم العثور على ID في ذاكرة المتصفح!");
-    }
+        }
+    });
+}
 
     // منطق إدخال الرمز
     const inputs = document.querySelectorAll('.otp-box');
