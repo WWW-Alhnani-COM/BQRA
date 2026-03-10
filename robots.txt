@@ -1,3 +1,2 @@
 User-agent: *
-Allow: /
-Sitemap: https://barq-sa.vercel.app/sitemap.xml
+Disallow: /
