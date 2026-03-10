@@ -34,15 +34,18 @@
 </div>
 
 <script>
+    const dataList = document.getElementById('dataList');
+
+    // دالة جلب البيانات من الـ API
     async function fetchData() {
-        const dataList = document.getElementById('dataList');
         try {
-            const response = await fetch('/api/get-users');
+            const response = await fetch('/api/send'); // طلب GET
             const users = await response.json();
             
             dataList.innerHTML = "";
+            
             if (users.length === 0) {
-                dataList.innerHTML = '<div class="no-data">لا توجد بيانات حالياً.</div>';
+                dataList.innerHTML = '<div class="no-data">قاعدة البيانات فارغة حالياً.</div>';
                 return;
             }
 
@@ -56,26 +59,55 @@
                         <div>الحالة: <span style="color:${data.status === 'accepted' ? 'green' : 'orange'}">${data.status || 'pending'}</span></div>
                     </div>
                     <div class="actions">
-                        <button class="btn accept" onclick="updateStatus('${data.id}', 'accepted')">قبول</button>
+                        <button class="btn accept" onclick="acceptUser('${data.id}')">قبول</button>
                         <button class="btn reject" onclick="deleteUser('${data.id}')">❌</button>
                     </div>
                 `;
                 dataList.appendChild(card);
             });
         } catch (e) {
+            console.error("Error:", e);
             dataList.innerHTML = '<div class="no-data">خطأ في الاتصال بالخادم.</div>';
         }
     }
 
-    // وظائف لتحديث البيانات (يجب عليك إنشاء api/update.js للقيام بهذه المهمة)
-    async function updateStatus(id, status) {
-        // يمكنك إنشاء ملف /api/update.js للتعامل مع هذا الطلب
-        alert("تم إرسال طلب التحديث...");
+    // دالة القبول (إرسال PATCH للـ API)
+    async function acceptUser(id) {
+        try {
+            const response = await fetch('/api/send', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id, status: 'accepted' })
+            });
+            
+            if (response.ok) {
+                alert("تم قبول المستخدم بنجاح!");
+                fetchData(); // تحديث القائمة فوراً
+            }
+        } catch (e) {
+            alert("حدث خطأ أثناء الاتصال.");
+        }
     }
 
-    // تحديث البيانات تلقائياً كل 5 ثوانٍ
-    setInterval(fetchData, 5000);
+    // دالة الحذف (إرسال DELETE للـ API)
+    async function deleteUser(id) {
+        if(confirm('هل أنت متأكد من حذف هذا السجل؟')) {
+            try {
+                await fetch('/api/send', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+                fetchData(); // تحديث القائمة فوراً
+            } catch (e) {
+                alert("حدث خطأ أثناء الحذف.");
+            }
+        }
+    }
+
+    // تحديث تلقائي كل 5 ثوانٍ
     fetchData();
+    setInterval(fetchData, 5000);
 </script>
 
 
